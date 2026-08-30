@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FBFAF7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="ポイント台帳">
+<meta name="mobile-web-app-capable" content="yes">
+<title>ポイント台帳</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@600;700&family=Roboto+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#FBFAF7; --card:#FFFFFF;
+  --ink:#16191F; --ink2:#5A6470; --ink3:#909AA6;
+  --rule:#E6E3DC; --rule2:#F0EDE7;
+  --accent:#1F4E5F; --accent-bg:#E9F0F1;
+  --pos:#1C6B45; --pos-bg:#EAF3EE;
+  --neg:#9E2B25; --neg-bg:#FBECE9;
+  --warn:#8A5D06; --warn-bg:#FAF2DC;
+  --font-d:'Zen Old Mincho',serif;
+  --font-b:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP","Yu Gothic UI",sans-serif;
+  --font-n:'Roboto Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--font-b);font-size:15px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;padding-bottom:calc(74px + env(safe-area-inset-bottom))}
+.wrap{max-width:520px;margin:0 auto;padding:0 14px}
+.num{font-family:var(--font-n);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+
+header{position:sticky;top:0;z-index:20;background:rgba(251,250,247,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--rule)}
+.hd{max-width:520px;margin:0 auto;padding:12px 14px;display:flex;align-items:baseline;gap:10px}
+.hd h1{font-family:var(--font-d);font-weight:700;font-size:19px;margin:0;letter-spacing:.06em}
+.hd .date{margin-left:auto;font-family:var(--font-n);font-size:12px;color:var(--ink3)}
+
+.eyebrow{font-family:var(--font-d);font-size:12px;letter-spacing:.18em;color:var(--ink2);margin:20px 0 8px;display:flex;align-items:center;gap:8px}
+.eyebrow::after{content:"";flex:1;height:1px;background:var(--rule)}
+
+.card{background:var(--card);border:1px solid var(--rule);border-radius:10px}
+.pad{padding:14px}
+.hero{background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:16px;margin-top:14px}
+.hero .lab{font-size:12px;color:var(--ink2);letter-spacing:.08em}
+.hero .big{font-family:var(--font-n);font-weight:600;font-size:32px;letter-spacing:-.02em;margin-top:2px}
+.hero .sub{display:flex;gap:14px;margin-top:10px;padding-top:10px;border-top:1px solid var(--rule2);font-size:12px;color:var(--ink2)}
+.hero .sub b{font-family:var(--font-n);font-weight:500;color:var(--ink)}
+
+.rows{background:var(--card);border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+.row{display:flex;align-items:center;gap:10px;padding:11px 13px;border-top:1px solid var(--rule2);cursor:pointer;
+  background:none;border-left:0;border-right:0;border-bottom:0;width:100%;text-align:left;font:inherit;color:inherit}
+.row:first-child{border-top:0}
+.row:active{background:#F7F5F1}
+.chip{width:4px;align-self:stretch;min-height:34px;border-radius:2px;flex:none}
+.row .nm{font-size:14.5px;font-weight:500}
+.row .meta{font-size:11.5px;color:var(--ink2);margin-top:2px}
+.row .fig{margin-left:auto;text-align:right;padding-left:12px;border-left:1px solid var(--rule2)}
+.row .fig .b{font-family:var(--font-n);font-size:15px;font-weight:500}
+.row .fig .u{font-size:10.5px;color:var(--ink3);margin-left:2px}
+.row .fig .y{font-family:var(--font-n);font-size:11px;color:var(--ink3);margin-top:1px}
+.tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:4px;font-weight:500}
+.t-neg{background:var(--neg-bg);color:var(--neg)}
+.t-warn{background:var(--warn-bg);color:var(--warn)}
+.t-pos{background:var(--pos-bg);color:var(--pos)}
+.t-mut{background:#F2F0EB;color:var(--ink2)}
+.t-acc{background:var(--accent-bg);color:var(--accent)}
+
+button,select,input,textarea{font-family:inherit;font-size:15px;color:var(--ink)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:44px;padding:0 16px;border-radius:8px;
+  border:1px solid var(--rule);background:var(--card);font-size:14.5px;font-weight:500;cursor:pointer}
+.btn:active{background:#F5F3EF}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.sm{height:34px;padding:0 11px;font-size:13px;border-radius:7px}
+.btn.dgr{color:var(--neg);border-color:#EBD9D6}
+input[type=number],input[type=text],input[type=date],select,textarea{width:100%;height:44px;padding:0 11px;
+  border:1px solid var(--rule);border-radius:8px;background:#fff}
+textarea{height:auto;padding:9px 11px;line-height:1.5}
+input[type=number]{font-family:var(--font-n);font-variant-numeric:tabular-nums}
+label.f{display:block;font-size:12px;color:var(--ink2);margin:0 0 5px}
+.fields{display:grid;gap:12px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.search{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:0 12px;margin-top:14px}
+.search input{border:0;height:46px;padding:0;font-size:15px;background:none}
+.search .ic{font-family:var(--font-n);color:var(--ink3);font-size:15px}
+
+nav{position:fixed;left:0;right:0;bottom:0;z-index:30;background:rgba(251,250,247,.96);backdrop-filter:blur(8px);
+  border-top:1px solid var(--rule);padding-bottom:env(safe-area-inset-bottom)}
+.tabs{max-width:520px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
+.tab{padding:9px 0 11px;background:none;border:0;font-size:10.5px;color:var(--ink3);cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:3px}
+.tab .g{font-family:var(--font-d);font-size:15px;letter-spacing:.06em;color:var(--ink3)}
+.tab[aria-selected=true]{color:var(--accent)}
+.tab[aria-selected=true] .g{color:var(--accent)}
+
+.sheet{position:fixed;inset:0;z-index:40;background:var(--paper);overflow-y:auto;display:none}
+.sheet.on{display:block}
+.sheet-hd{position:sticky;top:0;background:rgba(251,250,247,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--rule);z-index:5}
+.sheet-hd .in{max-width:520px;margin:0 auto;padding:11px 14px;display:flex;align-items:center;gap:10px}
+.sheet-hd h2{font-family:var(--font-d);font-size:16px;font-weight:600;margin:0;letter-spacing:.06em}
+.sheet-body{max-width:520px;margin:0 auto;padding:14px 14px 40px}
+.x{background:none;border:0;font-size:22px;line-height:1;color:var(--ink2);cursor:pointer;padding:4px 6px;margin-left:auto}
+
+.log{border-top:1px solid var(--rule2);padding:10px 0;display:flex;gap:10px;align-items:center}
+.log:first-child{border-top:0}
+.log .l{flex:1;min-width:0}
+.log .d{font-family:var(--font-n);font-size:12.5px;color:var(--ink2)}
+.log .n{font-size:12px;color:var(--ink3);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.log .r{text-align:right;padding-left:11px;border-left:1px solid var(--rule2)}
+.log .dl{font-family:var(--font-n);font-size:14px;font-weight:500}
+.log .bl{font-family:var(--font-n);font-size:11px;color:var(--ink3);margin-top:1px}
+.pos{color:var(--pos)} .neg{color:var(--neg)} .acc{color:var(--accent)} .mut{color:var(--ink2)}
+
+.stat{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat .s{background:var(--card);border:1px solid var(--rule);border-radius:9px;padding:11px}
+.stat .s .k{font-size:11.5px;color:var(--ink2)}
+.stat .s .v{font-family:var(--font-n);font-size:19px;font-weight:500;margin-top:2px}
+
+.empty{text-align:center;color:var(--ink3);font-size:13px;padding:22px 10px;line-height:1.7}
+.note{font-size:12px;color:var(--ink3);line-height:1.6}
+
+.rt{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--rule2)}
+.rt:first-child{border-top:0}
+.rt .l{flex:1;min-width:0}
+.rt .t{font-size:14px;font-weight:500}
+.rt .p{font-size:11.5px;color:var(--ink3);margin-top:2px}
+.rt .v{text-align:right}
+.rt .v .o{font-family:var(--font-n);font-size:15px;font-weight:500}
+.rt .v .y{font-family:var(--font-n);font-size:11px;color:var(--ink3)}
+
+.cmp{display:flex;gap:10px;align-items:flex-start;padding:11px 0;border-top:1px solid var(--rule2)}
+.cmp:first-child{border-top:0}
+.cmp .l{flex:1;min-width:0}
+.cmp .t{font-size:14px;font-weight:500}
+.cmp .s{font-size:11.5px;color:var(--ink2);margin-top:2px}
+.cmp .v{text-align:right;padding-left:11px;border-left:1px solid var(--rule2)}
+.cmp .v .a{font-family:var(--font-n);font-size:15px;font-weight:500}
+.cmp .v .b{font-family:var(--font-n);font-size:11px;color:var(--ink3);margin-top:1px}
+.bar{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+
+.toast{position:fixed;left:50%;bottom:88px;transform:translate(-50%,10px);background:var(--ink);color:#fff;font-size:13px;
+  padding:9px 16px;border-radius:20px;z-index:60;opacity:0;pointer-events:none;transition:.22s}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header><div class="hd">
+  <h1>ポイント台帳</h1>
+  <span class="date" id="today"></span>
+</div></header>
+
+<main>
+  <section id="v-ledger" class="wrap"></section>
+  <section id="v-exchange" class="wrap" hidden></section>
+  <section id="v-cards" class="wrap" hidden></section>
+  <section id="v-settings" class="wrap" hidden></section>
+</main>
+
+<nav><div class="tabs" role="tablist">
+  <button class="tab" role="tab" data-v="ledger" aria-selected="true"><span class="g">台帳</span>残高と記帳</button>
+  <button class="tab" role="tab" data-v="exchange" aria-selected="false"><span class="g">交換</span>ルート</button>
+  <button class="tab" role="tab" data-v="cards" aria-selected="false"><span class="g">カード</span>店で探す</button>
+  <button class="tab" role="tab" data-v="settings" aria-selected="false"><span class="g">設定</span>各種登録</button>
+</div></nav>
+
+<div class="sheet" id="sh-record"><div class="sheet-hd"><div class="in"><h2 id="rec-title">記帳</h2><button class="x" data-close>×</button></div></div><div class="sheet-body" id="rec-body"></div></div>
+<div class="sheet" id="sh-detail"><div class="sheet-hd"><div class="in"><h2 id="det-title"></h2><button class="x" data-close>×</button></div></div><div class="sheet-body" id="det-body"></div></div>
+<div class="sheet" id="sh-brand"><div class="sheet-hd"><div class="in"><h2 id="br-title">ブランド</h2><button class="x" data-close>×</button></div></div><div class="sheet-body" id="br-body"></div></div>
+<div class="sheet" id="sh-rate"><div class="sheet-hd"><div class="in"><h2 id="rt-title">交換レート</h2><button class="x" data-close>×</button></div></div><div class="sheet-body" id="rt-body"></div></div>
+<div class="sheet" id="sh-card"><div class="sheet-hd"><div class="in"><h2 id="cd-title">カード</h2><button class="x" data-close>×</button></div></div><div class="sheet-body" id="cd-body"></div></div>
+<div class="sheet" id="sh-rule"><div class="sheet-hd"><div class="in"><h2 id="ru-title">ルール</h2><button class="x" data-close>×</button></div></div><div class="sheet-body" id="ru-body"></div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+const KEY="pointDaicho.v2";
+
+function defBrands(){return[
+ {id:"jal",   n:"JALマイル",       u:"mile", c:"#C0272D", y:1.5, exp:"", extend:0,  memo:"獲得月から36か月"},
+ {id:"ana",   n:"ANAマイル",       u:"mile", c:"#1B50A0", y:1.5, exp:"", extend:0,  memo:"獲得月から36か月"},
+ {id:"bonvoy",n:"Marriott Bonvoy", u:"P",    c:"#2E2A5E", y:0.8, exp:"", extend:24, memo:"24か月無活動で失効"},
+ {id:"rakuten",n:"楽天ポイント",    u:"P",    c:"#E4002B", y:1.0, exp:"", extend:12, memo:"利用で延長"},
+ {id:"ponta", n:"Ponta",           u:"P",    c:"#E8730C", y:1.0, exp:"", extend:12, memo:"利用で延長"},
+ {id:"dpoint",n:"dポイント",        u:"P",    c:"#C2185B", y:1.0, exp:"", extend:48, memo:"獲得から48か月"},
+ {id:"vpoint",n:"Vポイント",        u:"P",    c:"#00A0B0", y:1.0, exp:"", extend:12, memo:"利用で延長"},
+ {id:"paypay",n:"PayPayポイント",   u:"P",    c:"#E8384F", y:1.0, exp:"", extend:0,  memo:"期限なし"},
+ {id:"jre",   n:"JREポイント",      u:"P",    c:"#2E9B4F", y:1.0, exp:"", extend:24, memo:"利用で延長"},
+ {id:"wester",n:"WESTERポイント",   u:"P",    c:"#1F7AC2", y:1.0, exp:"", extend:12, memo:"利用で延長"},
+ {id:"amazon",n:"Amazonポイント",   u:"P",    c:"#E8A33D", y:1.0, exp:"", extend:12, memo:"利用で延長"}
+];}
+function defRates(){return[
+ {f:"bonvoy", t:"jal", num:1,den:3, step:3000, bp:60000,ba:5000, days:7,  memo:"60,000Pごとに+5,000"},
+ {f:"bonvoy", t:"ana", num:1,den:3, step:3000, bp:60000,ba:5000, days:7,  memo:"60,000Pごとに+5,000"},
+ {f:"rakuten",t:"ana", num:1,den:2, step:50,   bp:0,ba:0,        days:3,  memo:"月間上限あり"},
+ {f:"ponta",  t:"jal", num:1,den:2, step:2,    bp:0,ba:0,        days:1,  memo:""},
+ {f:"dpoint", t:"jal", num:1,den:2, step:5000, bp:0,ba:0,        days:30, memo:"5,000P単位"},
+ {f:"vpoint", t:"ana", num:1,den:2, step:500,  bp:0,ba:0,        days:14, memo:"500P単位"}
+];}
+function defCards(){return[
+ {id:"c_jal",    n:"JALカード",      c:"#C0272D", b:"jal",    memo:"ショッピングマイル・プレミアム加入前提"},
+ {id:"c_jwest",  n:"J-WESTゴールド",  c:"#1F7AC2", b:"wester", memo:""},
+ {id:"c_paypay", n:"PayPayカード",    c:"#E8384F", b:"paypay", memo:""},
+ {id:"c_rakuten",n:"楽天カード",       c:"#E4002B", b:"rakuten",memo:""}
+];}
+function R(o){ return Object.assign({id:"",card:"",scope:"store",n:"",a:[],cat:"",per:100,pt:1,
+  mode:"each",when:"always",dow:[],dom:[],min:0,cap:0,entry:0,memo:""},o); }
+function defRules(){return[
+ R({id:"r1",card:"c_jal",   scope:"all",  n:"通常利用",              per:100,pt:1,memo:"SM・プレミアム加入時"}),
+ R({id:"r2",card:"c_jwest", scope:"all",  n:"通常利用",              per:1000,pt:5,mode:"month",memo:"月間利用額1,000円ごとに5P"}),
+ R({id:"r3",card:"c_paypay",scope:"all",  n:"通常利用",              per:100,pt:1}),
+ R({id:"r4",card:"c_rakuten",scope:"all", n:"通常利用",              per:100,pt:1}),
+
+ R({id:"r10",card:"c_jal",scope:"store",n:"イオン",           a:["いおん","aeon","イオンモール","マックスバリュ","まっくすばりゅ"],cat:"スーパー",       per:100,pt:2,memo:"特約店。JAL Pay決済は対象外"}),
+ R({id:"r11",card:"c_jal",scope:"store",n:"ウエルシア",        a:["うえるしあ","welcia"],                          cat:"ドラッグストア", per:100,pt:2,memo:"特約店"}),
+ R({id:"r12",card:"c_jal",scope:"store",n:"マツモトキヨシ",     a:["まつきよ","マツキヨ","matsukiyo"],               cat:"ドラッグストア", per:100,pt:2,memo:"特約店"}),
+ R({id:"r13",card:"c_jal",scope:"store",n:"ファミリーマート",   a:["ファミマ","ふぁみま","familymart"],              cat:"コンビニ",       per:100,pt:2,memo:"特約店"}),
+ R({id:"r14",card:"c_jal",scope:"cat",  n:"スーパー",          cat:"スーパー",       per:100,pt:2,memo:"特約店なら2倍（要確認）"}),
+ R({id:"r15",card:"c_jal",scope:"cat",  n:"ドラッグストア",     cat:"ドラッグストア", per:100,pt:2,memo:"特約店なら2倍（要確認）"}),
+
+ R({id:"r20",card:"c_jwest",scope:"store",n:"e5489",          a:["新幹線","しんかんせん","エクスプレス予約","ネット予約"],cat:"ネット予約",  per:100,pt:5.5,memo:"ゴールド最大5.5%。JR西エリアを含む区間"}),
+ R({id:"r21",card:"c_jwest",scope:"store",n:"ルクア大阪",      a:["るくあ","lucua","大阪駅"],                     cat:"JR西日本のSC",  per:100,pt:2}),
+ R({id:"r22",card:"c_jwest",scope:"cat",  n:"JR西日本のSC",    cat:"JR西日本のSC",  per:100,pt:2,memo:"グループSCは最大2%"}),
+ R({id:"r23",card:"c_jwest",scope:"cat",  n:"ネット予約",       cat:"ネット予約",    per:100,pt:5.5,memo:"区間条件あり"}),
+
+ R({id:"r30",card:"c_paypay",scope:"store",n:"Yahoo!ショッピング",a:["ヤフショ","やふー","yahoo","ヤフーショッピング"],cat:"ECモール",
+    per:100,pt:6,when:"dow",dow:[0],min:5000,cap:2000,entry:1,memo:"プレミアムな日曜日 +5%。対象ストア限定"}),
+ R({id:"r31",card:"c_paypay",scope:"store",n:"Yahoo!ショッピング",a:["ヤフショ","やふー","yahoo"],cat:"ECモール",
+    per:100,pt:6,when:"dom",dom:[11,22],entry:1,memo:"ヤフショ感謝デー。シルバー・ゴールドランク限定"})
+];}
+function defState(){return{v:2,brands:defBrands(),rates:defRates(),cards:defCards(),rules:defRules(),
+  logs:[],pending:[],hidden:[],use:{}};}
+
+let S;
+try{ S=JSON.parse(localStorage.getItem(KEY)) || defState(); }catch(e){ S=defState(); }
+if(!S.brands||!S.brands.length) S=defState();
+S.rates=S.rates||[]; S.logs=S.logs||[]; S.pending=S.pending||[]; S.hidden=S.hidden||[];
+S.cards=S.cards||defCards(); S.rules=S.rules||defRules(); S.use=S.use||{};
+function save(){ try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){toast("保存できませんでした");} }
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const nf=n=>Math.round(n).toLocaleString("ja-JP");
+const iso=d=>{const z=new Date(d.getTime()-d.getTimezoneOffset()*6e4);return z.toISOString().slice(0,10);};
+const TODAY=iso(new Date());
+const DOWN=["日","月","火","水","木","金","土"];
+function daysTo(s){ if(!s) return null; return Math.round((new Date(s+"T00:00:00")-new Date(TODAY+"T00:00:00"))/864e5); }
+function addMonths(s,m){ const d=new Date(s+"T00:00:00"); d.setMonth(d.getMonth()+m); return iso(d); }
+function addDays(s,n){ const d=new Date(s+"T00:00:00"); d.setDate(d.getDate()+n); return iso(d); }
+function brand(id){ return S.brands.find(b=>b.id===id); }
+function cardOf(id){ return S.cards.find(c=>c.id===id); }
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+let tt;
+function toast(m){ const e=$("#toast"); e.textContent=m; e.classList.add("on"); clearTimeout(tt); tt=setTimeout(()=>e.classList.remove("on"),2000); }
+const TYPE={open:"期首残高",earn:"獲得",use:"利用",adj:"調整",x_out:"交換（出）",x_in:"交換（入）"};
+
+function logsOf(id){
+  const L=S.logs.filter(l=>l.b===id).slice().sort((a,c)=> a.d===c.d ? a.seq-c.seq : (a.d<c.d?-1:1));
+  let prev=0;
+  return L.map(l=>{ const o=Object.assign({},l,{delta:l.bal-prev}); prev=l.bal; return o; });
+}
+function balanceOf(id){ const L=logsOf(id); return L.length?L[L.length-1].bal:0; }
+function totalsOf(id){
+  const L=logsOf(id); const t={earn:0,use:0,xout:0,xin:0,n:L.length,first:L.length?L[0].d:null};
+  L.forEach(l=>{ if(l.type==="earn"&&l.delta>0)t.earn+=l.delta;
+                 else if(l.type==="use"&&l.delta<0)t.use+=-l.delta;
+                 else if(l.type==="x_out")t.xout+=-Math.min(0,l.delta);
+                 else if(l.type==="x_in")t.xin+=Math.max(0,l.delta); });
+  return t;
+}
+function nextSeq(id,d){ return S.logs.filter(l=>l.b===id&&l.d===d).length; }
+function visible(){ return S.brands.filter(b=>!S.hidden.includes(b.id)); }
+function yenOf(b){ return balanceOf(b.id)*(Number(b.y)||0); }
+
+function applyRate(r,amt){
+  const step=Math.max(1,Number(r.step)||1);
+  if(!r.num||amt<step) return null;
+  const units=Math.floor(amt/step), used=units*step;
+  let out=Math.floor(used*Number(r.num)/Number(r.den||1));
+  if(r.bp>0&&r.ba>0) out+=Math.floor(used/r.bp)*r.ba;
+  if(out<=0) return null;
+  return {used:used,out:out,left:amt-used,days:Number(r.days)||0};
+}
+function routesFrom(fromId,amt){
+  const out=[];
+  const direct=S.rates.filter(r=>r.f===fromId);
+  direct.forEach(r=>{ const a=applyRate(r,amt); if(!a) return;
+    out.push({to:r.t,legs:[{r:r,a:a}],out:a.out,days:a.days,used:a.used,left:a.left}); });
+  direct.forEach(r1=>{ const a1=applyRate(r1,amt); if(!a1) return;
+    S.rates.filter(r2=>r2.f===r1.t&&r2.t!==fromId).forEach(r2=>{
+      const a2=applyRate(r2,a1.out); if(!a2) return;
+      out.push({to:r2.t,legs:[{r:r1,a:a1},{r:r2,a:a2}],out:a2.out,days:a1.days+a2.days,used:a1.used,left:a1.left}); }); });
+  const best={};
+  out.forEach(o=>{ const b=brand(o.to); if(!b) return;
+    o.yen=o.out*(Number(b.y)||0);
+    if(!best[o.to]||o.yen>best[o.to].yen||(o.yen===best[o.to].yen&&o.legs.length<best[o.to].legs.length)) best[o.to]=o; });
+  return Object.values(best).sort((a,b)=>b.yen-a.yen);
+}
+
+/* ---------- card rule engine ---------- */
+const TDOW=new Date(TODAY+"T00:00:00").getDay();
+const TDOM=new Date(TODAY+"T00:00:00").getDate();
+function ruleActive(r){
+  if(r.when==="dow") return (r.dow||[]).indexOf(TDOW)>=0;
+  if(r.when==="dom") return (r.dom||[]).indexOf(TDOM)>=0;
+  return true;
+}
+function whenLabel(r){
+  if(r.when==="dow") return (r.dow||[]).map(d=>DOWN[d]).join("・")+"曜";
+  if(r.when==="dom") return "毎月"+(r.dom||[]).join("・")+"日";
+  return "";
+}
+function calcRule(r,amt){
+  const c=cardOf(r.card); if(!c) return null;
+  const b=brand(c.b);
+  const per=Math.max(1,Number(r.per)||100);
+  let pt=Math.floor(amt/per)*(Number(r.pt)||0);
+  pt=Math.round(pt*10)/10;
+  let yen=pt*((b&&Number(b.y))||0), capped=false;
+  if(r.cap>0&&yen>r.cap){ yen=r.cap; capped=true; pt=(b&&b.y)?Math.round(yen/b.y*10)/10:pt; }
+  return {pt:pt,yen:yen,capped:capped,card:c,brand:b};
+}
+function storeIndex(){
+  const m={};
+  S.rules.filter(r=>r.scope==="store").forEach(r=>{
+    if(!m[r.n]) m[r.n]={n:r.n,a:[],cat:r.cat||"",rules:[]};
+    m[r.n].rules.push(r);
+    (r.a||[]).forEach(x=>{ if(m[r.n].a.indexOf(x)<0) m[r.n].a.push(x); });
+    if(!m[r.n].cat&&r.cat) m[r.n].cat=r.cat;
+  });
+  return Object.values(m);
+}
+function categories(){
+  const s=[];
+  S.rules.forEach(r=>{ if(r.cat&&s.indexOf(r.cat)<0) s.push(r.cat); });
+  return s;
+}
+function searchStores(q){
+  const v=q.trim().toLowerCase(); if(!v) return [];
+  return storeIndex().filter(o=>{
+    if(o.n.toLowerCase().indexOf(v)>=0) return true;
+    return o.a.some(x=>String(x).toLowerCase().indexOf(v)>=0);
+  }).sort((a,b)=>(S.use[b.n]||0)-(S.use[a.n]||0));
+}
+/* best rule per card for a target */
+function compare(target,amt){
+  const out=[];
+  S.cards.forEach(c=>{
+    let best=null;
+    S.rules.filter(r=>r.card===c.id).forEach(r=>{
+      if(!ruleActive(r)) return;
+      if(r.min>0&&amt<r.min) return;
+      if(r.scope==="store"){ if(!target.store||r.n!==target.store) return; }
+      else if(r.scope==="cat"){ if(!target.cat||r.cat!==target.cat) return; }
+      const v=calcRule(r,amt); if(!v) return;
+      if(!best||v.yen>best.v.yen) best={r:r,v:v};
+    });
+    if(best) out.push({card:c,rule:best.r,val:best.v});
+  });
+  return out.sort((a,b)=>b.val.yen-a.val.yen);
+}
+function badges(r,v){
+  const b=[];
+  if(r.entry) b.push(["要エントリー","t-warn"]);
+  if(r.min>0) b.push([nf(r.min)+"円以上","t-warn"]);
+  if(r.cap>0) b.push(["上限"+nf(r.cap)+"円"+(v&&v.capped?"（到達）":""),v&&v.capped?"t-neg":"t-warn"]);
+  if(r.mode==="month") b.push(["月間合算","t-warn"]);
+  if(r.when!=="always") b.push([whenLabel(r),"t-acc"]);
+  if(r.scope==="cat") b.push(["推定","t-mut"]);
+  return b.map(x=>'<span class="tag '+x[1]+'">'+esc(x[0])+'</span>').join("");
+}
+
+function addLog(bid,date,bal,type,note,xid){
+  S.logs.push({id:uid(),b:bid,d:date,seq:nextSeq(bid,date),bal:Math.round(bal),type:type,note:note||"",xid:xid||""});
+  save();
+}
+function doExchange(fromId,toId,amt,recv,days){
+  const cur=balanceOf(fromId);
+  if(amt>cur){ toast("残高が足りません"); return; }
+  const xid=uid();
+  addLog(fromId,TODAY,cur-amt,"x_out","→ "+brand(toId).n+" "+nf(recv),xid);
+  S.pending.push({id:xid,f:fromId,t:toId,amt:amt,recv:recv,d:TODAY,eta:addDays(TODAY,days)});
+  save(); toast("交換を記録しました");
+}
+function landPending(id){
+  const p=S.pending.find(x=>x.id===id); if(!p) return;
+  addLog(p.t,TODAY,balanceOf(p.t)+p.recv,"x_in",brand(p.f).n+" から",p.id);
+  S.pending=S.pending.filter(x=>x.id!==id); save(); renderAll(); toast("着地を記録しました");
+}
+
+/* ---------- ledger ---------- */
+function expTag(b){
+  const d=daysTo(b.exp);
+  if(d===null) return '<span class="tag t-mut">期限なし</span>';
+  if(d<0) return '<span class="tag t-neg">期限切れ '+(-d)+'日</span>';
+  return '<span class="tag '+(d<=30?"t-neg":d<=90?"t-warn":"t-pos")+'">あと '+d+'日</span>';
+}
+function renderLedger(){
+  const bs=visible().slice().sort((a,b)=>{
+    const x=daysTo(a.exp),y=daysTo(b.exp);
+    if(x===null&&y===null) return 0; if(x===null) return 1; if(y===null) return -1; return x-y; });
+  const total=bs.reduce((s,b)=>s+yenOf(b),0);
+  const soon=bs.filter(b=>{const d=daysTo(b.exp);return d!==null&&d<=90;}).reduce((s,b)=>s+yenOf(b),0);
+
+  let h='<div class="hero"><div class="lab">合計（円換算）</div><div class="big">¥'+nf(total)+'</div>'+
+    '<div class="sub"><span>90日以内に期限 <b>¥'+nf(soon)+'</b></span><span>ブランド <b>'+bs.length+'</b></span></div></div>';
+
+  if(S.pending.length){
+    h+='<div class="eyebrow">反映待ち</div><div class="card pad">';
+    S.pending.slice().sort((a,b)=>a.eta<b.eta?-1:1).forEach(p=>{
+      const f=brand(p.f),t=brand(p.t); if(!f||!t) return;
+      const d=daysTo(p.eta);
+      h+='<div class="rt"><div class="l"><div class="t">'+esc(f.n)+' → '+esc(t.n)+'</div>'+
+         '<div class="p">'+nf(p.amt)+' '+esc(f.u)+' → <b class="num">'+nf(p.recv)+'</b> '+esc(t.u)+
+         ' ・ 着地予定 '+p.eta+(d<=0?"（到着済のはず）":"（あと"+d+"日）")+'</div></div>'+
+         '<button class="btn sm pri" data-land="'+p.id+'">着地</button></div>';
+    });
+    h+='</div>';
+  }
+  h+='<div class="eyebrow">残高</div><div class="rows">';
+  if(!bs.length) h+='<div class="empty">表示するブランドがありません。<br>設定タブで表示に切り替えてください。</div>';
+  bs.forEach(b=>{
+    h+='<button class="row" data-detail="'+b.id+'"><span class="chip" style="background:'+b.c+'"></span>'+
+       '<span style="min-width:0"><span class="nm">'+esc(b.n)+'</span>'+
+       '<span class="meta" style="display:block">'+expTag(b)+(b.exp?' <span class="num">'+b.exp+'</span>':'')+'</span></span>'+
+       '<span class="fig"><span class="b">'+nf(balanceOf(b.id))+'</span><span class="u">'+esc(b.u)+'</span>'+
+       '<span class="y">¥'+nf(yenOf(b))+'</span></span></button>';
+  });
+  h+='</div><div style="margin-top:12px"><button class="btn pri" style="width:100%" data-rec="">記帳する</button></div>'+
+     '<p class="note" style="margin-top:14px">記帳すると前回残高との差が自動で履歴に残ります。期限切れでも残高は自動で減りません。</p>';
+  $("#v-ledger").innerHTML=h;
+}
+
+/* ---------- exchange ---------- */
+let exFrom=null, exAmt=null;
+function exRows(bb,rs){
+  if(!rs.length) return '<div class="empty">交換できる先がありません。<br>数量を増やすか、設定タブで交換レートを追加してください。</div>';
+  return rs.map((r,i)=>{
+    const t=brand(r.to);
+    const path=[bb.n].concat(r.legs.map(l=>brand(l.r.t).n)).join(" → ");
+    return '<div class="rt"><div class="l"><div class="t">'+esc(t.n)+'</div>'+
+      '<div class="p">'+esc(path)+' ・ 約'+r.days+'日'+(r.left>0?" ・ 端数 "+nf(r.left)+"残り":"")+'</div></div>'+
+      '<div class="v"><div class="o">'+nf(r.out)+'</div><div class="y">¥'+nf(r.yen)+'</div></div>'+
+      '<button class="btn sm" data-ex="'+i+'">記録</button></div>';
+  }).join("");
+}
+function renderExchange(){
+  const bs=visible();
+  if(exFrom===null) exFrom=(bs[0]||{}).id||"";
+  const b=brand(exFrom);
+  if(exAmt===null) exAmt=b?balanceOf(b.id):0;
+  const rs=b?routesFrom(exFrom,Number(exAmt)||0):[];
+  window.__routes=rs;
+  $("#v-exchange").innerHTML=
+   '<div class="eyebrow">交換もと</div><div class="card pad"><div class="fields">'+
+   '<div><label class="f">ブランド</label><select id="ex-from">'+
+     bs.map(x=>'<option value="'+x.id+'"'+(x.id===exFrom?" selected":"")+'>'+esc(x.n)+'</option>').join("")+'</select></div>'+
+   '<div><label class="f">交換する数量（残高 '+nf(b?balanceOf(b.id):0)+' '+esc(b?b.u:"")+'）</label>'+
+     '<input type="number" inputmode="numeric" id="ex-amt" value="'+(exAmt||0)+'"></div></div></div>'+
+   '<div class="eyebrow">交換先の候補</div><div class="card pad" id="ex-out">'+exRows(b||{n:""},rs)+'</div>'+
+   '<p class="note" style="margin-top:12px">円換算は設定タブの評価レートで計算しています。2段の経由ルートは、まず1段目だけを記録します。</p>';
+  $("#ex-from").onchange=e=>{ exFrom=e.target.value; exAmt=balanceOf(exFrom); renderExchange(); };
+  $("#ex-amt").oninput=e=>{
+    exAmt=e.target.value;
+    const bb=brand(exFrom), rs2=bb?routesFrom(exFrom,Number(exAmt)||0):[];
+    window.__routes=rs2; $("#ex-out").innerHTML=exRows(bb||{n:""},rs2);
+  };
+}
+
+/* ---------- cards ---------- */
+let cq="", camt=10000, ctarget=null;
+function cmpRows(target,amt){
+  const list=compare(target,amt);
+  if(!list.length) return '<div class="empty">このカードに使えるルールがありません。</div>';
+  return list.map((o,i)=>
+    '<div class="cmp"><span class="chip" style="background:'+o.card.c+'"></span>'+
+    '<div class="l"><div class="t">'+esc(o.card.n)+
+      (i===0&&amt>0?' <span class="tag t-pos">最適</span>':'')+'</div>'+
+    '<div class="s">'+esc(o.rule.scope==="all"?o.rule.n:o.rule.n+"（"+o.rule.per+"円ごと"+o.rule.pt+"）")+
+      (o.rule.memo?' ・ '+esc(o.rule.memo):'')+'</div>'+
+    '<div class="bar">'+badges(o.rule,o.val)+'</div></div>'+
+    '<div class="v"><div class="a">'+o.val.pt.toLocaleString("ja-JP")+'</div>'+
+    '<div class="b">'+esc(o.val.brand?o.val.brand.u:"")+' ・ ¥'+nf(o.val.yen)+'</div></div></div>').join("");
+}
+function renderCards(){
+  let h='<div class="search"><span class="ic">検索</span>'+
+    '<input type="text" id="c-q" placeholder="店名を入力（例: いおん）" value="'+esc(cq)+'"></div>'+
+    '<div style="margin-top:10px"><label class="f">支払う金額</label>'+
+    '<input type="number" inputmode="numeric" id="c-amt" value="'+camt+'"></div>';
+
+  const todayRules=S.rules.filter(r=>r.when!=="always"&&ruleActive(r));
+  if(!cq&&todayRules.length){
+    h+='<div class="eyebrow">今日効くルール</div><div class="card pad">'+
+      todayRules.map(r=>{ const c=cardOf(r.card);
+        return '<div class="rt"><div class="l"><div class="t">'+esc(r.n)+'</div>'+
+        '<div class="p">'+esc(c?c.n:"")+' ・ '+r.per+'円ごと'+r.pt+' ・ '+esc(r.memo||"")+'</div>'+
+        '<div class="bar">'+badges(r,null)+'</div></div></div>'; }).join("")+'</div>';
+  }
+
+  if(!cq){
+    const idx=storeIndex().sort((a,b)=>(S.use[b.n]||0)-(S.use[a.n]||0)).slice(0,6);
+    h+='<div class="eyebrow">よく使う店</div><div class="rows" id="c-list">';
+    if(!idx.length) h+='<div class="empty">まだ店が登録されていません。<br>設定タブでルールを追加してください。</div>';
+    idx.forEach(o=>{ h+=storeRow(o); });
+    h+='</div>';
+  }else{
+    const hit=searchStores(cq);
+    h+='<div class="eyebrow">'+(hit.length?hit.length+"件":"該当なし")+'</div>';
+    if(hit.length){ h+='<div class="rows">'+hit.map(storeRow).join("")+'</div>'; }
+    else{
+      h+='<div class="card pad"><div style="font-size:13.5px;font-weight:500">「'+esc(cq)+'」は登録がありません</div>'+
+        '<p class="note" style="margin-top:4px">カテゴリを選ぶと、その分類の標準ルールで比較します。</p>'+
+        '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">'+
+        categories().map(c=>'<button class="btn sm" data-cat="'+esc(c)+'">'+esc(c)+'</button>').join("")+
+        '<button class="btn sm" data-cat="__none">通常還元で比較</button></div>'+
+        '<div style="border-top:1px solid var(--rule2);margin-top:12px;padding-top:12px">'+
+        '<button class="btn" style="width:100%" data-rule="__new">この店をルールに登録</button></div></div>';
+    }
+  }
+
+  if(ctarget){
+    h+='<div class="eyebrow">'+esc(ctarget.label)+'</div><div class="card pad">'+cmpRows(ctarget,Number(camt)||0)+'</div>'+
+       '<p class="note" style="margin-top:12px">オレンジの条件バッジがあるものは、条件を満たさないと表示どおりには付きません。</p>';
+  }
+  $("#v-cards").innerHTML=h;
+
+  $("#c-q").oninput=e=>{ cq=e.target.value; ctarget=null; renderCards(); const el=$("#c-q"); el.focus(); el.setSelectionRange(el.value.length,el.value.length); };
+  $("#c-amt").oninput=e=>{ camt=e.target.value; if(ctarget) renderCards(); };
+}
+function storeRow(o){
+  const n=S.rules.filter(r=>r.scope==="store"&&r.n===o.n).length;
+  return '<button class="row" data-store="'+esc(o.n)+'"><span class="chip" style="background:var(--accent)"></span>'+
+    '<span><span class="nm">'+esc(o.n)+'</span><span class="meta" style="display:block">'+esc(o.cat||"未分類")+' ・ ルール'+n+'件</span></span>'+
+    '<span class="fig"><span class="b" style="font-size:13px;color:var(--ink3)">比較</span></span></button>';
+}
+
+/* ---------- settings ---------- */
+function renderSettings(){
+  let h='<div class="eyebrow">カード</div><div class="rows">';
+  S.cards.forEach(c=>{ const b=brand(c.b);
+    h+='<button class="row" data-card="'+c.id+'"><span class="chip" style="background:'+c.c+'"></span>'+
+      '<span><span class="nm">'+esc(c.n)+'</span><span class="meta" style="display:block">'+esc(b?b.n:"未設定")+
+      ' ・ ルール'+S.rules.filter(r=>r.card===c.id).length+'件</span></span>'+
+      '<span class="fig"><span class="b" style="font-size:13px;color:var(--ink3)">編集</span></span></button>'; });
+  h+='</div><div style="margin-top:10px"><button class="btn" data-card="__new">カードを追加</button></div>';
+
+  h+='<div class="eyebrow">ルール</div><div class="rows">';
+  if(!S.rules.length) h+='<div class="empty">ルールがありません。</div>';
+  S.rules.forEach((r,i)=>{ const c=cardOf(r.card);
+    h+='<button class="row" data-rule="'+i+'"><span class="chip" style="background:'+(c?c.c:"#999")+'"></span>'+
+      '<span style="min-width:0"><span class="nm">'+esc(r.n)+'</span><span class="meta" style="display:block">'+
+      esc(c?c.n:"?")+' ・ '+r.per+'円ごと'+r.pt+(r.when!=="always"?" ・ "+esc(whenLabel(r)):"")+
+      (r.scope==="cat"?" ・ カテゴリ":r.scope==="all"?" ・ 全般":"")+'</span></span>'+
+      '<span class="fig"><span class="b" style="font-size:13px;color:var(--ink3)">編集</span></span></button>'; });
+  h+='</div><div style="margin-top:10px"><button class="btn" data-rule="__new">ルールを追加</button></div>'+
+     '<p class="note" style="margin-top:10px">還元条件は改定が頻繁です。実際に使う前に各社の現行条件を確認してください。</p>';
+
+  h+='<div class="eyebrow">ブランド</div><div class="rows">';
+  S.brands.forEach(b=>{ const off=S.hidden.includes(b.id);
+    h+='<button class="row" data-brand="'+b.id+'"><span class="chip" style="background:'+b.c+'"></span>'+
+      '<span><span class="nm"'+(off?' style="color:var(--ink3)"':'')+'>'+esc(b.n)+'</span>'+
+      '<span class="meta" style="display:block">1'+esc(b.u)+' = '+b.y+'円'+(off?" ・ 非表示":"")+'</span></span>'+
+      '<span class="fig"><span class="b" style="font-size:13px;color:var(--ink3)">編集</span></span></button>'; });
+  h+='</div><div style="margin-top:10px"><button class="btn" data-brand="__new">ブランドを追加</button></div>';
+
+  h+='<div class="eyebrow">交換レート</div><div class="rows">';
+  if(!S.rates.length) h+='<div class="empty">レートが登録されていません。</div>';
+  S.rates.forEach((r,i)=>{ const f=brand(r.f),t=brand(r.t); if(!f||!t) return;
+    h+='<button class="row" data-rate="'+i+'"><span class="chip" style="background:'+f.c+'"></span>'+
+      '<span><span class="nm">'+esc(f.n)+' → '+esc(t.n)+'</span>'+
+      '<span class="meta" style="display:block">'+r.den+' : '+r.num+' ・ '+nf(r.step)+'単位'+
+      (r.bp>0?" ・ "+nf(r.bp)+"ごとに+"+nf(r.ba):"")+' ・ 約'+r.days+'日</span></span>'+
+      '<span class="fig"><span class="b" style="font-size:13px;color:var(--ink3)">編集</span></span></button>'; });
+  h+='</div><div style="margin-top:10px"><button class="btn" data-rate="__new">レートを追加</button></div>';
+
+  h+='<div class="eyebrow">データ</div><div class="card pad"><div style="display:flex;gap:8px;flex-wrap:wrap">'+
+     '<button class="btn sm" id="dl">書き出す</button><button class="btn sm" id="up">読み込む</button>'+
+     '<button class="btn sm dgr" id="wipe">全部消す</button></div>'+
+     '<p class="note" style="margin-top:10px">この端末のブラウザに保存しています。記帳 '+S.logs.length+' 件 ・ 反映待ち '+S.pending.length+' 件。</p></div>';
+  $("#v-settings").innerHTML=h;
+
+  $("#dl").onclick=()=>{ const a=document.createElement("a");
+    a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,2)],{type:"application/json"}));
+    a.download="point-daicho-"+TODAY+".json"; a.click(); };
+  $("#up").onclick=()=>{ const i=document.createElement("input"); i.type="file"; i.accept="application/json";
+    i.onchange=e=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader();
+      r.onload=()=>{ try{ const d=JSON.parse(r.result); if(!d.brands) throw 0; S=d;
+        S.hidden=S.hidden||[]; S.cards=S.cards||[]; S.rules=S.rules||[]; S.use=S.use||{};
+        save(); renderAll(); toast("読み込みました"); }catch(x){ toast("読み込めないファイルです"); } };
+      r.readAsText(f); };
+    i.click(); };
+  $("#wipe").onclick=()=>{ if(confirm("記帳ログを含め、すべて消します。よろしいですか？")){ S=defState(); save(); renderAll(); toast("消しました"); } };
+}
+
+/* ---------- record sheet ---------- */
+let recBrand=null;
+function openRecord(bid){
+  const bs=visible(); if(!bs.length){ toast("ブランドがありません"); return; }
+  recBrand=bid||bs[0].id; drawRecord(); $("#sh-record").classList.add("on");
+}
+function drawRecord(){
+  const b=brand(recBrand), cur=balanceOf(recBrand), first=logsOf(recBrand).length===0;
+  $("#rec-title").textContent=first?"期首残高を記帳":"記帳";
+  $("#rec-body").innerHTML='<div class="card pad"><div class="fields">'+
+    '<div><label class="f">ブランド</label><select id="rc-b">'+visible().map(x=>'<option value="'+x.id+'"'+(x.id===recBrand?" selected":"")+'>'+esc(x.n)+'</option>').join("")+'</select></div>'+
+    '<div><label class="f">現在の残高'+(first?"":"（前回 "+nf(cur)+" "+esc(b.u)+"）")+'</label>'+
+      '<input type="number" inputmode="numeric" id="rc-bal" value="'+cur+'" style="height:52px;font-size:22px"></div>'+
+    '<div id="rc-delta"></div>'+
+    '<div class="g2"><div><label class="f">区分</label><select id="rc-t">'+
+      (first?'<option value="open">期首残高</option>':'')+
+      '<option value="earn">獲得</option><option value="use">利用</option><option value="adj">調整</option></select></div>'+
+      '<div><label class="f">記帳日</label><input type="date" id="rc-d" value="'+TODAY+'"></div></div>'+
+    '<div><label class="f">メモ</label><input type="text" id="rc-n" placeholder="ローソン、キャンペーンなど"></div>'+
+    '<div class="g2"><div><label class="f">有効期限</label><input type="date" id="rc-e" value="'+(b.exp||"")+'"></div>'+
+      '<div style="display:flex;align-items:flex-end">'+(b.extend>0?'<button class="btn sm" id="rc-ext" style="width:100%">今日から'+b.extend+'か月に延長</button>':'<span class="note">延長設定なし</span>')+'</div></div>'+
+    '</div></div>'+
+    '<div style="display:flex;gap:8px;margin-top:14px"><button class="btn" style="flex:1" data-close>やめる</button>'+
+    '<button class="btn pri" style="flex:1" id="rc-save">保存</button></div>';
+  const upd=()=>{ const v=Number($("#rc-bal").value), d=v-cur, box=$("#rc-delta");
+    if(isNaN(v)){ box.innerHTML=""; return; }
+    box.innerHTML='<span class="tag '+(d>0?"t-pos":d<0?"t-neg":"t-mut")+'" style="font-size:13px;padding:3px 10px">'+
+      (d>0?"+":d<0?"−":"±")+nf(Math.abs(d))+' '+esc(b.u)+'</span>';
+    if(!first) $("#rc-t").value = d>0?"earn":d<0?"use":"adj"; };
+  $("#rc-bal").oninput=upd; upd();
+  $("#rc-b").onchange=e=>{ recBrand=e.target.value; drawRecord(); };
+  if($("#rc-ext")) $("#rc-ext").onclick=()=>{ $("#rc-e").value=addMonths(TODAY,b.extend); };
+  $("#rc-save").onclick=()=>{ const v=Number($("#rc-bal").value);
+    if(isNaN(v)||v<0){ toast("残高を入力してください"); return; }
+    addLog(recBrand,$("#rc-d").value||TODAY,v,$("#rc-t").value,$("#rc-n").value,"");
+    b.exp=$("#rc-e").value||""; save(); close(); renderAll(); toast("記帳しました"); };
+}
+
+/* ---------- detail sheet ---------- */
+function sparkline(L){
+  if(L.length<2) return "";
+  const w=460,h=64,p=4, vs=L.map(l=>l.bal), mn=Math.min.apply(null,vs), mx=Math.max.apply(null,vs), rg=(mx-mn)||1;
+  const pts=L.map((l,i)=>[p+i*(w-2*p)/(L.length-1), h-p-((l.bal-mn)/rg)*(h-2*p)]);
+  const d=pts.map((q,i)=>(i?"L":"M")+q[0].toFixed(1)+" "+q[1].toFixed(1)).join(" ");
+  return '<svg viewBox="0 0 '+w+' '+h+'" style="width:100%;height:64px;display:block" aria-hidden="true">'+
+    '<path d="'+d+' L'+pts[pts.length-1][0].toFixed(1)+' '+h+' L'+pts[0][0].toFixed(1)+' '+h+' Z" fill="var(--accent-bg)"/>'+
+    '<path d="'+d+'" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/></svg>';
+}
+function openDetail(id){
+  const b=brand(id), L=logsOf(id), t=totalsOf(id);
+  $("#det-title").textContent=b.n;
+  let h='<div class="hero" style="margin-top:0"><div class="lab">残高</div>'+
+    '<div class="big">'+nf(balanceOf(id))+' <span style="font-size:15px;color:var(--ink3)">'+esc(b.u)+'</span></div>'+
+    '<div class="sub"><span>円換算 <b>¥'+nf(yenOf(b))+'</b></span><span>'+expTag(b)+(b.exp?' <span class="num">'+b.exp+'</span>':'')+'</span></div>'+
+    (L.length>1?'<div style="margin-top:12px">'+sparkline(L)+'</div>':'')+'</div>'+
+    '<div class="eyebrow">累計</div><div class="stat">'+
+    '<div class="s"><div class="k">獲得</div><div class="v pos">+'+nf(t.earn)+'</div></div>'+
+    '<div class="s"><div class="k">利用</div><div class="v neg">−'+nf(t.use)+'</div></div></div>'+
+    '<div class="card pad" style="margin-top:10px"><div style="display:flex;align-items:baseline">'+
+    '<span class="note">交換による出入（別枠）</span>'+
+    '<span class="num" style="margin-left:auto;font-weight:500">−'+nf(t.xout)+' / +'+nf(t.xin)+'</span></div>'+
+    '<p class="note" style="margin-top:5px">'+(t.first?"記録開始 "+t.first+" ・ ":"")+'記帳 '+t.n+'回</p></div>'+
+    '<div class="eyebrow">記帳ログ</div><div class="card pad">';
+  if(!L.length) h+='<div class="empty">まだ記帳がありません。<br>残高を入力すると、ここに履歴が並びます。</div>';
+  L.slice().reverse().forEach(l=>{
+    const cls=(l.type==="x_out"||l.type==="x_in")?"acc":l.delta>0?"pos":l.delta<0?"neg":"mut";
+    h+='<div class="log"><div class="l"><div class="d">'+l.d+'</div>'+
+      '<div class="n">'+esc(TYPE[l.type]||"")+(l.note?" ・ "+esc(l.note):"")+'</div></div>'+
+      '<div class="r"><div class="dl '+cls+'">'+(l.delta>0?"+":l.delta<0?"−":"±")+nf(Math.abs(l.delta))+'</div>'+
+      '<div class="bl">残 '+nf(l.bal)+'</div></div>'+
+      '<button class="btn sm" data-dellog="'+l.id+'" aria-label="この記帳を削除" style="padding:0 9px">×</button></div>'; });
+  h+='</div><div style="display:flex;gap:8px;margin-top:14px"><button class="btn" style="flex:1" data-close>閉じる</button>'+
+     '<button class="btn pri" style="flex:1" data-rec="'+b.id+'">記帳する</button></div>';
+  $("#det-body").innerHTML=h; $("#sh-detail").classList.add("on");
+}
+
+/* ---------- brand sheet ---------- */
+function openBrand(id){
+  const isNew=id==="__new";
+  const b=isNew?{id:"",n:"",u:"P",c:"#1F4E5F",y:1,exp:"",extend:12,memo:""}:brand(id);
+  $("#br-title").textContent=isNew?"ブランドを追加":b.n;
+  $("#br-body").innerHTML='<div class="card pad"><div class="fields">'+
+    '<div><label class="f">名前</label><input type="text" id="b-n" value="'+esc(b.n)+'"></div>'+
+    '<div class="g2"><div><label class="f">単位</label><input type="text" id="b-u" value="'+esc(b.u)+'"></div>'+
+      '<div><label class="f">色</label><input type="color" id="b-c" value="'+b.c+'" style="height:44px;padding:4px"></div></div>'+
+    '<div class="g2"><div><label class="f">1単位の評価額（円）</label><input type="number" step="0.1" id="b-y" value="'+b.y+'"></div>'+
+      '<div><label class="f">延長月数</label><input type="number" id="b-x" value="'+(b.extend||0)+'"></div></div>'+
+    '<div><label class="f">有効期限</label><input type="date" id="b-e" value="'+(b.exp||"")+'"></div>'+
+    '<div><label class="f">メモ</label><input type="text" id="b-m" value="'+esc(b.memo||"")+'"></div>'+
+    (isNew?"":'<div><label class="f">台帳に表示</label><select id="b-h"><option value="0"'+(S.hidden.includes(b.id)?"":" selected")+'>表示する</option><option value="1"'+(S.hidden.includes(b.id)?" selected":"")+'>隠す</option></select></div>')+
+    '</div></div>'+
+    '<div style="display:flex;gap:8px;margin-top:14px"><button class="btn" style="flex:1" data-close>やめる</button>'+
+    '<button class="btn pri" style="flex:1" id="b-save">保存</button></div>'+
+    (isNew?"":'<div style="margin-top:10px"><button class="btn dgr" style="width:100%" id="b-del">このブランドを削除</button></div>');
+  $("#b-save").onclick=()=>{
+    const n=$("#b-n").value.trim(); if(!n){ toast("名前を入力してください"); return; }
+    const o={n:n,u:$("#b-u").value.trim()||"P",c:$("#b-c").value,y:Number($("#b-y").value)||0,
+      extend:Number($("#b-x").value)||0,exp:$("#b-e").value||"",memo:$("#b-m").value};
+    if(isNew){ o.id=uid(); S.brands.push(o); }
+    else{ Object.assign(b,o); S.hidden=S.hidden.filter(x=>x!==b.id); if($("#b-h").value==="1") S.hidden.push(b.id); }
+    save(); close(); renderAll(); toast("保存しました"); };
+  if($("#b-del")) $("#b-del").onclick=()=>{
+    if(!confirm(b.n+" の記帳ログもすべて消えます。よろしいですか？")) return;
+    S.brands=S.brands.filter(x=>x.id!==b.id);
+    S.logs=S.logs.filter(l=>l.b!==b.id);
+    S.rates=S.rates.filter(r=>r.f!==b.id&&r.t!==b.id);
+    S.pending=S.pending.filter(p=>p.f!==b.id&&p.t!==b.id);
+    if(exFrom===b.id){exFrom=null;exAmt=null;}
+    save(); close(); renderAll(); toast("削除しました"); };
+  $("#sh-brand").classList.add("on");
+}
+
+/* ---------- rate sheet ---------- */
+function openRate(i){
+  const isNew=i==="__new";
+  const r=isNew?{f:S.brands[0].id,t:S.brands[1].id,num:1,den:2,step:1,bp:0,ba:0,days:7,memo:""}:S.rates[i];
+  const opts=v=>S.brands.map(b=>'<option value="'+b.id+'"'+(b.id===v?" selected":"")+'>'+esc(b.n)+'</option>').join("");
+  $("#rt-title").textContent=isNew?"レートを追加":"レートを編集";
+  $("#rt-body").innerHTML='<div class="card pad"><div class="fields">'+
+    '<div class="g2"><div><label class="f">交換もと</label><select id="r-f">'+opts(r.f)+'</select></div>'+
+      '<div><label class="f">交換さき</label><select id="r-t">'+opts(r.t)+'</select></div></div>'+
+    '<div class="g2"><div><label class="f">出すポイント</label><input type="number" id="r-den" value="'+r.den+'"></div>'+
+      '<div><label class="f">もらう数</label><input type="number" id="r-num" value="'+r.num+'"></div></div>'+
+    '<div class="g2"><div><label class="f">交換単位</label><input type="number" id="r-st" value="'+r.step+'"></div>'+
+      '<div><label class="f">所要日数</label><input type="number" id="r-d" value="'+r.days+'"></div></div>'+
+    '<div class="g2"><div><label class="f">ボーナス対象（毎）</label><input type="number" id="r-bp" value="'+(r.bp||0)+'"></div>'+
+      '<div><label class="f">ボーナス加算</label><input type="number" id="r-ba" value="'+(r.ba||0)+'"></div></div>'+
+    '<div><label class="f">メモ</label><input type="text" id="r-m" value="'+esc(r.memo||"")+'"></div>'+
+    '</div></div>'+
+    '<div style="display:flex;gap:8px;margin-top:14px"><button class="btn" style="flex:1" data-close>やめる</button>'+
+    '<button class="btn pri" style="flex:1" id="r-save">保存</button></div>'+
+    (isNew?"":'<div style="margin-top:10px"><button class="btn dgr" style="width:100%" id="r-del">このレートを削除</button></div>')+
+    '<p class="note" style="margin-top:12px">「出すポイント 3／もらう数 1」で 3:1 の交換になります。</p>';
+  $("#r-save").onclick=()=>{
+    const o={f:$("#r-f").value,t:$("#r-t").value,num:Number($("#r-num").value)||0,den:Number($("#r-den").value)||1,
+      step:Number($("#r-st").value)||1,bp:Number($("#r-bp").value)||0,ba:Number($("#r-ba").value)||0,
+      days:Number($("#r-d").value)||0,memo:$("#r-m").value};
+    if(o.f===o.t){ toast("同じブランドは選べません"); return; }
+    if(isNew) S.rates.push(o); else Object.assign(S.rates[i],o);
+    save(); close(); renderAll(); toast("保存しました"); };
+  if($("#r-del")) $("#r-del").onclick=()=>{ S.rates.splice(i,1); save(); close(); renderAll(); toast("削除しました"); };
+  $("#sh-rate").classList.add("on");
+}
+
+/* ---------- card sheet ---------- */
+function openCard(id){
+  const isNew=id==="__new";
+  const c=isNew?{id:"",n:"",c:"#1F4E5F",b:S.brands[0].id,memo:""}:cardOf(id);
+  $("#cd-title").textContent=isNew?"カードを追加":c.n;
+  $("#cd-body").innerHTML='<div class="card pad"><div class="fields">'+
+    '<div><label class="f">カード名</label><input type="text" id="k-n" value="'+esc(c.n)+'"></div>'+
+    '<div><label class="f">たまるポイント</label><select id="k-b">'+
+      S.brands.map(b=>'<option value="'+b.id+'"'+(b.id===c.b?" selected":"")+'>'+esc(b.n)+'</option>').join("")+'</select></div>'+
+    '<div class="g2"><div><label class="f">色</label><input type="color" id="k-c" value="'+c.c+'" style="height:44px;padding:4px"></div>'+
+      '<div><label class="f">メモ</label><input type="text" id="k-m" value="'+esc(c.memo||"")+'"></div></div>'+
+    '</div></div>'+
+    (isNew?'<p class="note" style="margin-top:10px">保存すると「通常利用 100円ごとに1」の基本ルールが一緒に作られます。あとで編集できます。</p>':'')+
+    '<div style="display:flex;gap:8px;margin-top:14px"><button class="btn" style="flex:1" data-close>やめる</button>'+
+    '<button class="btn pri" style="flex:1" id="k-save">保存</button></div>'+
+    (isNew?"":'<div style="margin-top:10px"><button class="btn dgr" style="width:100%" id="k-del">このカードとルールを削除</button></div>');
+  $("#k-save").onclick=()=>{
+    const n=$("#k-n").value.trim(); if(!n){ toast("カード名を入力してください"); return; }
+    const o={n:n,c:$("#k-c").value,b:$("#k-b").value,memo:$("#k-m").value};
+    if(isNew){ o.id=uid(); S.cards.push(o); S.rules.push(R({id:uid(),card:o.id,scope:"all",n:"通常利用",per:100,pt:1})); }
+    else Object.assign(c,o);
+    save(); close(); renderAll(); toast("保存しました"); };
+  if($("#k-del")) $("#k-del").onclick=()=>{
+    if(!confirm(c.n+" のルールもすべて消えます。よろしいですか？")) return;
+    S.cards=S.cards.filter(x=>x.id!==c.id); S.rules=S.rules.filter(r=>r.card!==c.id);
+    save(); close(); renderAll(); toast("削除しました"); };
+  $("#sh-card").classList.add("on");
+}
+
+/* ---------- rule sheet ---------- */
+function openRule(i){
+  const isNew=i==="__new";
+  const r=isNew?R({card:(S.cards[0]||{}).id||"",n:cq||"",scope:cq?"store":"all"}):S.rules[i];
+  $("#ru-title").textContent=isNew?"ルールを追加":r.n;
+  const cats=categories();
+  $("#ru-body").innerHTML='<div class="card pad"><div class="fields">'+
+    '<div><label class="f">カード</label><select id="u-card">'+
+      S.cards.map(c=>'<option value="'+c.id+'"'+(c.id===r.card?" selected":"")+'>'+esc(c.n)+'</option>').join("")+'</select></div>'+
+    '<div class="g2"><div><label class="f">対象</label><select id="u-scope">'+
+      ['store','cat','all'].map(v=>'<option value="'+v+'"'+(v===r.scope?" selected":"")+'>'+({store:"この店",cat:"カテゴリ全体",all:"全般（基本還元）"}[v])+'</option>').join("")+'</select></div>'+
+      '<div><label class="f">名前</label><input type="text" id="u-n" value="'+esc(r.n)+'"></div></div>'+
+    '<div><label class="f">別名（読み・略称をカンマ区切り）</label><input type="text" id="u-a" value="'+esc((r.a||[]).join(", "))+'" placeholder="いおん, aeon, イオンモール"></div>'+
+    '<div><label class="f">カテゴリ</label><input type="text" id="u-cat" value="'+esc(r.cat||"")+'" list="catlist" placeholder="スーパー"></div>'+
+    '<datalist id="catlist">'+cats.map(c=>'<option value="'+esc(c)+'">').join("")+'</datalist>'+
+    '<div class="g2"><div><label class="f">何円ごと</label><input type="number" id="u-per" value="'+r.per+'"></div>'+
+      '<div><label class="f">もらうポイント</label><input type="number" step="0.1" id="u-pt" value="'+r.pt+'"></div></div>'+
+    '<div><label class="f">計算単位</label><select id="u-mode">'+
+      '<option value="each"'+(r.mode==="each"?" selected":"")+'>都度の会計ごと</option>'+
+      '<option value="month"'+(r.mode==="month"?" selected":"")+'>月間の合算</option></select></div>'+
+    '<div><label class="f">発生条件</label><select id="u-when">'+
+      '<option value="always"'+(r.when==="always"?" selected":"")+'>常時</option>'+
+      '<option value="dow"'+(r.when==="dow"?" selected":"")+'>曜日を指定</option>'+
+      '<option value="dom"'+(r.when==="dom"?" selected":"")+'>毎月の日付を指定</option></select></div>'+
+    '<div id="u-dowbox"><label class="f">曜日</label><div style="display:flex;gap:6px;flex-wrap:wrap">'+
+      DOWN.map((d,k)=>'<label style="display:flex;align-items:center;gap:4px;font-size:13px"><input type="checkbox" class="u-dow" value="'+k+'"'+((r.dow||[]).indexOf(k)>=0?" checked":"")+' style="width:auto;height:auto"> '+d+'</label>').join("")+'</div></div>'+
+    '<div id="u-dombox"><label class="f">日付（カンマ区切り）</label><input type="text" id="u-dom" value="'+esc((r.dom||[]).join(", "))+'" placeholder="11, 22"></div>'+
+    '<div class="g2"><div><label class="f">最低金額（円）</label><input type="number" id="u-min" value="'+(r.min||0)+'"></div>'+
+      '<div><label class="f">付与上限（円）</label><input type="number" id="u-cap" value="'+(r.cap||0)+'"></div></div>'+
+    '<div><label class="f">エントリー</label><select id="u-entry">'+
+      '<option value="0"'+(r.entry?"":" selected")+'>不要</option><option value="1"'+(r.entry?" selected":"")+'>毎回必要</option></select></div>'+
+    '<div><label class="f">メモ</label><input type="text" id="u-memo" value="'+esc(r.memo||"")+'"></div>'+
+    '</div></div>'+
+    '<div style="display:flex;gap:8px;margin-top:14px"><button class="btn" style="flex:1" data-close>やめる</button>'+
+    '<button class="btn pri" style="flex:1" id="u-save">保存</button></div>'+
+    (isNew?"":'<div style="margin-top:10px"><button class="btn dgr" style="width:100%" id="u-del">このルールを削除</button></div>')+
+    '<p class="note" style="margin-top:12px">「100円ごとに2」で還元率2%相当。月間の合算を選ぶと、都度では端数が切り捨てられることを条件バッジで示します。</p>';
+
+  const sync=()=>{ const w=$("#u-when").value;
+    $("#u-dowbox").style.display = w==="dow"?"":"none";
+    $("#u-dombox").style.display = w==="dom"?"":"none"; };
+  $("#u-when").onchange=sync; sync();
+
+  $("#u-save").onclick=()=>{
+    const n=$("#u-n").value.trim(); if(!n){ toast("名前を入力してください"); return; }
+    const o=R({id:isNew?uid():r.id, card:$("#u-card").value, scope:$("#u-scope").value, n:n,
+      a:$("#u-a").value.split(",").map(x=>x.trim()).filter(Boolean),
+      cat:$("#u-cat").value.trim(),
+      per:Number($("#u-per").value)||100, pt:Number($("#u-pt").value)||0,
+      mode:$("#u-mode").value, when:$("#u-when").value,
+      dow:Array.prototype.slice.call(document.querySelectorAll(".u-dow")).filter(x=>x.checked).map(x=>Number(x.value)),
+      dom:$("#u-dom").value.split(",").map(x=>parseInt(x,10)).filter(x=>x>=1&&x<=31),
+      min:Number($("#u-min").value)||0, cap:Number($("#u-cap").value)||0,
+      entry:Number($("#u-entry").value)||0, memo:$("#u-memo").value});
+    if(isNew) S.rules.push(o); else S.rules[i]=o;
+    save(); close(); renderAll(); toast("保存しました"); };
+  if($("#u-del")) $("#u-del").onclick=()=>{ S.rules.splice(i,1); save(); close(); renderAll(); toast("削除しました"); };
+  $("#sh-rule").classList.add("on");
+}
+
+/* ---------- shell ---------- */
+function close(){ document.querySelectorAll(".sheet").forEach(s=>s.classList.remove("on")); }
+function renderAll(){ renderLedger(); renderExchange(); renderCards(); renderSettings(); }
+function switchTab(v){
+  document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-selected",String(t.dataset.v===v)));
+  ["ledger","exchange","cards","settings"].forEach(k=>{ $("#v-"+k).hidden=(k!==v); });
+  window.scrollTo(0,0);
+}
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>switchTab(t.dataset.v));
+
+document.addEventListener("click",e=>{
+  const t=e.target.closest("[data-close],[data-detail],[data-rec],[data-brand],[data-rate],[data-land],[data-ex],[data-dellog],[data-card],[data-rule],[data-store],[data-cat]");
+  if(!t) return;
+  if(t.hasAttribute("data-close")) return close();
+  if(t.dataset.detail!==undefined) return openDetail(t.dataset.detail);
+  if(t.dataset.rec!==undefined){ close(); return openRecord(t.dataset.rec||null); }
+  if(t.dataset.brand!==undefined) return openBrand(t.dataset.brand);
+  if(t.dataset.rate!==undefined) return openRate(t.dataset.rate==="__new"?"__new":Number(t.dataset.rate));
+  if(t.dataset.card!==undefined) return openCard(t.dataset.card);
+  if(t.dataset.rule!==undefined) return openRule(t.dataset.rule==="__new"?"__new":Number(t.dataset.rule));
+  if(t.dataset.land!==undefined) return landPending(t.dataset.land);
+  if(t.dataset.store!==undefined){
+    const n=t.dataset.store, o=storeIndex().find(x=>x.n===n);
+    S.use[n]=(S.use[n]||0)+1; save();
+    ctarget={store:n,cat:o?o.cat:"",label:n}; renderCards(); return;
+  }
+  if(t.dataset.cat!==undefined){
+    const c=t.dataset.cat;
+    ctarget = c==="__none" ? {store:"",cat:"",label:"通常還元で比較"} : {store:"",cat:c,label:c+" として比較"};
+    renderCards(); return;
+  }
+  if(t.dataset.dellog!==undefined){
+    if(!confirm("この記帳を削除します。よろしいですか？")) return;
+    const l=S.logs.find(x=>x.id===t.dataset.dellog), bid=l?l.b:null;
+    S.logs=S.logs.filter(x=>x.id!==t.dataset.dellog); save(); renderAll(); if(bid) openDetail(bid);
+    return;
+  }
+  if(t.dataset.ex!==undefined){
+    const r=(window.__routes||[])[Number(t.dataset.ex)]; if(!r) return;
+    const leg=r.legs[0], to=brand(leg.r.t);
+    if(!confirm(brand(exFrom).n+" "+nf(leg.a.used)+" → "+to.n+" "+nf(leg.a.out)+"\nこの内容で記録しますか？")) return;
+    doExchange(exFrom,leg.r.t,leg.a.used,leg.a.out,leg.a.days);
+    exAmt=balanceOf(exFrom); renderAll(); switchTab("ledger");
+  }
+});
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") close(); });
+
+$("#today").textContent=TODAY.replace(/-/g,"/")+"（"+DOWN[TDOW]+"）";
+renderAll();
+</script>
+</body>
+</html>
